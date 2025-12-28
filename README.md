@@ -27,3 +27,5 @@ Bonus penguin:
 
 https://github.com/user-attachments/assets/1a53c7ec-5cce-478f-b112-e3cff1909d9a
 
+
+P. S. I might add settable edge & vertex colors later down the line
