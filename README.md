@@ -25,6 +25,7 @@ const std::vector<std::vector<int>> edges = {
 W, A, S, D, and spacebar work as valid inputs, moving the camera(x, y, z axis)
 All four arrow keys are used to rotate the model rather than it being rotated automatically
 E, V used to toggle edges and vertices respectively
+R to reset the mesh & position
 Borders added to prevent going through meshes(bugs out the math, messes with controls)
 
 Bonus penguin:
