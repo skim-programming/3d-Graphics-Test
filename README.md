@@ -19,13 +19,14 @@ const std::vector<std::vector<int>> edges = {
 }
 ```
 
-One final thing, the buttons e and v are used to toggle the view of edges and vertices respectively.
 
-
+## Update
+### Added Controls, Borders, and more
+W, A, S, D work as valid inputs, moving the camera
+All four arrow keys are used to rotate the model rather than it being rotated automatically
+E, V used to toggle edges and vertices respectively
+Borders added to prevent going through meshes(bugs out the math, messes with controls)
 
 Bonus penguin:
 
 https://github.com/user-attachments/assets/1a53c7ec-5cce-478f-b112-e3cff1909d9a
-
-
-P. S. I might add settable edge & vertex colors later down the line
