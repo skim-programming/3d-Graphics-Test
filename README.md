@@ -22,7 +22,7 @@ const std::vector<std::vector<int>> edges = {
 
 ## Update
 ### Added Controls, Borders, and more
-W, A, S, D work as valid inputs, moving the camera
+W, A, S, D, and spacebar work as valid inputs, moving the camera(x, y, z axis)
 All four arrow keys are used to rotate the model rather than it being rotated automatically
 E, V used to toggle edges and vertices respectively
 Borders added to prevent going through meshes(bugs out the math, messes with controls)
