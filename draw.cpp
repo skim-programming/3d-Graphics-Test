@@ -14,23 +14,33 @@ Vector2d project(const Vector3d& coords) {
 
 void drawPixel(const Vector2d& coords, const int size)
 {
-    const int h = size;
-    const int w = size;
-	constexpr uint32_t color = 0xFF00FF00; 
+    //static const uint32_t colors[] = {
+    //    0xFFFF0000, 0xFFFF7F00, 0xFFFFFF00, 0xFF00FF00,
+    //    0xFF00FFFF, 0xFF0000FF, 0xFF4B0082, 0xFF9400D3
+    //};
+    //static int colorIndex = 0;
+    //uint32_t color = colors[colorIndex];
+    //colorIndex = (colorIndex + 1) % 8; // wrap around
 
-    int cx = static_cast<int>(std::round(coords.x));
-    int cy = static_cast<int>(std::round(coords.y));
+	uint32_t color = 0xFFFFFFFF; // white
 
-    for (int i = -w/2; i < w/2; i++) {
-        for (int j = -h/2; j < h/2; j++) {
-            int px = cx + i;
+    int cx = static_cast<int>(coords.x + 0.5);
+    int cy = static_cast<int>(coords.y + 0.5);
+
+    int halfW = size / 2;
+    int halfH = size / 2;
+
+    for (int i = -halfW; i < halfW; i++) {
+        int px = cx + i;
+        if (px < 0 || px >= screenWidth) continue;
+        for (int j = -halfH; j < halfH; j++) {
             int py = cy + j;
-            if (px >= 0 && px < screenWidth && py >= 0 && py < screenHeight) {
-				frameBuffer[py * screenWidth + px] = color;
-            }
+            if (py < 0 || py >= screenHeight) continue;
+            frameBuffer[py * screenWidth + px] = color;
         }
     }
 }
+
 
 void drawLine(const Vector2d& start, const Vector2d& end)
 {
@@ -69,6 +79,26 @@ void drawLine(const Vector2d& start, const Vector2d& end)
     }
 }
 
+Vector3d rotate_xy(Vector3d coords, float angle) {
+    const float c = std::cos(angle);
+    const float s = std::sin(angle);
+    return Vector3d(
+        coords.x * c - coords.y * s,
+        coords.x * s + coords.y * c,
+        coords.z
+	);
+}
+
+Vector3d rotate_yz(Vector3d coords, float angle) {
+    const float c = std::cos(angle);
+    const float s = std::sin(angle);
+    return Vector3d(
+        coords.x,
+        coords.y * c - coords.z * s,
+        coords.y * s + coords.z * c
+    );
+}
+
 Vector3d rotate_xz(Vector3d coords, float angle) {
     const float c = std::cos(angle);
     const float s = std::sin(angle);
@@ -76,7 +106,7 @@ Vector3d rotate_xz(Vector3d coords, float angle) {
         coords.x * c - coords.z * s,
         coords.y,
         coords.x * s + coords.z * c
-	);
+    );
 }
 
 Vector3d computeCenter(const std::vector<Vector3d>& verts)
@@ -88,7 +118,7 @@ Vector3d computeCenter(const std::vector<Vector3d>& verts)
     return center / verts.size();
 }
 
-std::vector<Vector3d> rotateMeshInPlace(const std::vector<Vector3d> verts, double angle)
+std::vector<Vector3d> rotateMeshInPlace(const std::vector<Vector3d> verts, double angle, Axis axis)
 {
     std::vector<Vector3d> res = verts;
     Vector3d center = computeCenter(verts);
@@ -98,8 +128,14 @@ std::vector<Vector3d> rotateMeshInPlace(const std::vector<Vector3d> verts, doubl
         // move to local space
         Vector3d local = v - center;
 
+        if(axis == X_AXIS)
+			local = rotate_xy(local, angle);
+        else if(axis == Y_AXIS)
+            local = rotate_xz(local, angle);
+        else {
+            local = rotate_yz(local, angle);
+        }
         // rotate
-        local = rotate_xz(local, angle);
 
         // move back to world space
         v = local + center;

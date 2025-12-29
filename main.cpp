@@ -40,6 +40,29 @@ Vector2d rotate(Vector2d d, float theta) {
     };
 }
 
+bool keyPressedOnce(int vk)
+{
+    static std::unordered_map<int, bool> wasDown;
+
+    bool isDown = (GetAsyncKeyState(vk) & 0x8000) != 0;
+    bool pressed = isDown && !wasDown[vk];
+
+    wasDown[vk] = isDown;
+    return pressed;
+}
+
+// Inspired by DPP library's run_once function
+template<typename F>
+void run_once(F&& fn)
+{
+    static bool ran = false;
+    if (!ran)
+    {
+        ran = true;
+        fn();
+    }
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 {
     setupGlobals();
@@ -78,19 +101,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
     }
 
+	// Validate edge indices
+    bool caught = false;
+    for (auto& e : edges) {
+        for (int idx : e) {
+            if (idx < 0 || idx >= vertices.size()) {
+                std::cerr << "Invalid index: " << idx << "\n";
+                caught = true;
+            }
+        }
+    }
+    if (caught) {
+        throw std::runtime_error("Invalid edge indices detected. Check logs for details.");
+    }
+
     // Pre-Loop Initialization
 	float zVal = 1.0f;
+	float xVal = 0.0f;
 
     float angle = 0.0f;
 
 	std::vector<Vector3d> rotatedVertices = vertices;
 
-    bool vRender = true;
-	bool vToggle = false;
+    // Face forward
+    for(auto& v : rotatedVertices) {
+        v.z = -v.z;
+	}
+
+    bool vRender = false;
     bool eRender = true;
-    bool eToggle = false;
 
     bool checkToggle = false;
+
+    float closestV = 1000.0f;
 
     // Main loop
     while (running)
@@ -109,15 +152,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
         }
 
-
-		rotatedVertices = rotateMeshInPlace(vertices, angle);
-
         if (vRender)
         {
             for (const auto& v : rotatedVertices)
             {
                 Vector3d tv = v;
                 tv.z += zVal;
+				tv.x += xVal;
                 drawPixel(screen(project(tv)));
             }
 
@@ -125,51 +166,73 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 		if (eRender)
         {
-            // Check for invalid indices in edges
-            if (!checkToggle) {
-                bool caught = false;
-                for (auto& e : edges) {
-                    for (int idx : e) {
-                        if (idx < 0 || idx >= vertices.size()) {
-                            std::cerr << "Invalid index: " << idx << "\n";
-                            caught = true;
-                        }
-                    }
-                }
-                if(caught) {
-                    throw std::runtime_error("Invalid edge indices detected. Check logs for details.");
-				}
-                checkToggle = true;
-            }
             for (const auto& e : edges)
             {
                 for (int i = 0; i < e.size(); ++i) {
                     Vector3d a = rotatedVertices[e[i]];
                     Vector3d b = rotatedVertices[e[(i + 1) % e.size()]];
 					a.z += zVal; b.z += zVal;
+					a.x += xVal; b.x += xVal;
                     drawLine(screen(project(a)), screen(project(b)));
                 }
                
             }
         }
 
-        if ((GetAsyncKeyState('V') & 0x8000) && !vToggle) {
+        for (auto& v : rotatedVertices) {
+            if (v.z < closestV) {
+                closestV = v.z;
+            }
+        }
+
+        if (zVal < -closestV * 2) {
+            zVal = -closestV * 2;
+        }
+
+        if (keyPressedOnce('V')) {
             vRender = !vRender;
-            vToggle = true;
 		}
-        else if (!(GetAsyncKeyState('V') & 0x8000) && vToggle){
-			vToggle = false;
-        }
 
-        if ((GetAsyncKeyState('E') & 0x8000) && !eToggle) {
+        if (keyPressedOnce('E')) {
             eRender = !eRender;
-            eToggle = true;
         }
-        else if(!(GetAsyncKeyState('E') & 0x8000) && eToggle) {
-            eToggle = false;
+        if (keyPressedOnce('R')) {
+            rotatedVertices = vertices;
+            for (auto& v : rotatedVertices) {
+                v.z = -v.z;
+            }
+        }
+        if (GetAsyncKeyState(VK_UP) & 0x8000) {
+            rotatedVertices = rotateMeshInPlace(rotatedVertices, -angle, Z_AXIS);
+        }
+        if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
+            rotatedVertices = rotateMeshInPlace(rotatedVertices, angle, Z_AXIS);
+        }
+        if (GetAsyncKeyState(VK_LEFT) & 0x8000) {
+            rotatedVertices = rotateMeshInPlace(rotatedVertices, -angle, Y_AXIS);
+        }
+        if (GetAsyncKeyState(VK_RIGHT) & 0x8000) {
+            rotatedVertices = rotateMeshInPlace(rotatedVertices, angle, Y_AXIS);
+        }
+        if (GetAsyncKeyState(VK_SPACE) & 0x8000) {
+            rotatedVertices = rotateMeshInPlace(rotatedVertices, -angle, X_AXIS);
+		}
+        if (GetAsyncKeyState('W') & 0x8000) {
+            zVal -= 0.1f;
+        }
+        if (GetAsyncKeyState('S') & 0x8000) {
+            zVal += 0.1f;
+        }
+        if (GetAsyncKeyState('A') & 0x8000) {
+            xVal += 0.1f;
+        }
+        if (GetAsyncKeyState('D') & 0x8000) {
+            xVal -= 0.1f;
         }
 
-        angle += 0.05f;// 2.0f * 3.14159265358f * 1/60;
+        angle = 0.10f;// 2.0f * 3.14159265358f * 1/60;
+
+        closestV = 1000.0f;
 
         // Actual displaying framebuffer to window
         StretchDIBits(

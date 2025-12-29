@@ -12,7 +12,9 @@ Vector3d rotate_xz(Vector3d coords, float angle);
 
 // Vector3d computeCenter(const std::vector<Vector3d>& verts);
 
-std::vector<Vector3d> rotateMeshInPlace(const std::vector<Vector3d> verts, double angle);
+enum Axis { X_AXIS, Y_AXIS, Z_AXIS };
+
+std::vector<Vector3d> rotateMeshInPlace(const std::vector<Vector3d> verts, double angle, Axis axis);
 
 uint32_t LerpColor(uint32_t c1, uint32_t c2, float t);
 
