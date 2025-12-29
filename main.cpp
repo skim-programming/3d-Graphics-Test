@@ -201,6 +201,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
             for (auto& v : rotatedVertices) {
                 v.z = -v.z;
             }
+			zVal = 1.0f;
+			xVal = 0.0f;
         }
         if (GetAsyncKeyState(VK_UP) & 0x8000) {
             rotatedVertices = rotateMeshInPlace(rotatedVertices, -angle, Z_AXIS);
